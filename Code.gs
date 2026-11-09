@@ -19,7 +19,7 @@ function textCell_(v,n){var s=safe_(v,n);return /^[=+@\-\t\r]/.test(s)?"'"+s:s;}
 function numeric_(v,min,max){if(v===null||v===undefined||v==='')return '';if(typeof v!=='number'||!isFinite(v)||v<min||v>max)throw Error('Некорректное числовое значение.');return v;}
 var OPTIONS_={reasons:['Стоимость продуктов','Оплата персонала','Логистика и оборудование','Изменение меню и набора услуг','Изменение бюджета клиентов','Другое','Чек существенно не изменился','Нет данных'],trend:['Экономия и контроль бюджета','ЗОЖ и специальные рационы','Гастрономические впечатления','Локальные продукты','Экологичность и сокращение отходов','Небольшие / офисные форматы','Другое','Явного тренда не вижу'],alcohol:['Снизился','Примерно не изменился','Вырос','Алкоголь предоставляет заказчик, нет данных','Не работаем с такими мероприятиями']};
 function doPost(e){var lock=LockService.getScriptLock();try{
-  var raw=e&&e.postData&&e.postData.contents;if(!raw||raw.length>16000)throw Error('Некорректный запрос.');var p=JSON.parse(raw),a=p.answers||{},x=p.expert||{};
+  var raw=e&&e.parameter&&e.parameter.payload||e&&e.postData&&e.postData.contents;if(!raw||raw.length>16000)throw Error('Некорректный запрос.');var p=JSON.parse(raw),a=p.answers||{},x=p.expert||{};
   if(!/^[a-f0-9-]{36}$/.test(p.id)||!/^[a-f0-9-]{36}$/.test(p.revision))throw Error('Некорректный ID.');
   if(!safe_(a.region,160))throw Error('Нужен регион.');
   if(!Array.isArray(a.reasons)||a.reasons.length<1||a.reasons.length>2||new Set(a.reasons).size!==a.reasons.length||a.reasons.some(function(i){return !Number.isInteger(i)||i<0||i>7;}))throw Error('Выберите до двух причин.');

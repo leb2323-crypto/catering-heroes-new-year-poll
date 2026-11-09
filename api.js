@@ -11,9 +11,15 @@ const API = {
     });
   },
   async send(payload){
-    await fetch(window.SURVEY_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
-    // no-cors hides the POST response: confirm actual persistence using a non-personal receipt.
-    for(let i=0;i<8;i++){const r=await this.jsonp({action:'receipt',id:payload.id,revision:payload.revision});if(r.saved)return r;await new Promise(r=>setTimeout(r,1200));}
-    throw new Error('Запись пока не подтверждена. Нажмите «Отправить» ещё раз — повторного голоса не будет.');
+    if(!window.SURVEY_ENDPOINT)throw new Error('Приём ответов ещё не подключён.');
+    const frame=document.createElement('iframe'),form=document.createElement('form'),field=document.createElement('input');
+    frame.name='send_'+crypto.randomUUID().replaceAll('-','');frame.hidden=true;frame.title='Отправка ответа';
+    form.method='POST';form.action=window.SURVEY_ENDPOINT;form.target=frame.name;form.hidden=true;
+    field.type='hidden';field.name='payload';field.value=JSON.stringify(payload);form.appendChild(field);
+    document.body.append(frame,form);form.submit();
+    // A normal cross-origin form submits reliably without CORS; the receipt proves persistence.
+    try{for(let i=0;i<10;i++){const r=await this.jsonp({action:'receipt',id:payload.id,revision:payload.revision});if(r.saved)return r;await new Promise(r=>setTimeout(r,1500));}
+      throw new Error('Запись пока не подтверждена. Нажмите «Отправить» ещё раз — повторного голоса не будет.');
+    }finally{form.remove();frame.remove();}
   }
 };

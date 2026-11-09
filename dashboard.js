@@ -1,11 +1,11 @@
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let latest=null,busy=false,token=sessionStorage.getItem('ch-poll-admin')||'';
 const join=new URL('index.html',location.href).href;$('join').href=join;$('join').textContent=join;
-$('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(join);
+$('qr').src='qr.svg';
 $('select').innerHTML=SURVEY.questions.map((q,i)=>`<option value="${i}">${esc(q.title)}</option>`).join('');$('select').value='1';$('select').onchange=draw;
 function num(n){return Number.isFinite(n)?new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(n):'—';}
 function draw(){if(!latest)return;const q=SURVEY.questions[Number($('select').value)],s=latest.questions[q.id];
- $('metrics').innerHTML=`<div class="metric"><b>${latest.total}</b><small>компаний ответили</small></div><div class="metric"><b>${s.n}</b><small>содержательных ответов на вопрос</small></div><div class="metric"><b>${latest.total-s.n}</b><small>нет данных / пропущено</small></div>`;
+ $('metrics').innerHTML=`<div class="metric"><b>${latest.total}</b><small>компаний ответили</small></div><div class="metric"><b>${s.n}</b><small>ответов на вопрос</small></div><div class="metric"><b>${latest.total-s.n}</b><small>нет данных / пропущено</small></div>`;
  let html=`<h2>${esc(q.title)}</h2><p class="hint">${esc(q.hint)}</p>`;
  if(!s.n)html+='<p>Ответов пока нет. Оставьте QR-код на экране, чтобы участники подключились.</p>';
  else if(q.type==='number')html+=`<div class="metrics"><div class="metric"><b>${num(s.median)}</b><small>медиана · ${esc(q.unit)}</small></div><div class="metric"><b>${num(s.mean)}</b><small>среднее · ${esc(q.unit)}</small></div><div class="metric"><b>${num(s.min)}–${num(s.max)}</b><small>диапазон ответов · ${esc(q.unit)}</small></div></div><p class="hint">Каждая компания имеет одинаковый вес. ${q.id==='change'?'Показано среднее индивидуальных изменений чека, а не изменение среднего чека рынка.':''}</p>`;
