@@ -1,6 +1,6 @@
 const $=id=>document.getElementById(id),KEY='ch-new-year-poll-2026-v2';
 let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch{}
-let state={id:saved.id||crypto.randomUUID(),answers:saved.answers||{},index:Math.min(saved.index||0,SURVEY.questions.length-1),submitted:!!saved.submitted};
+let state={id:saved.id||crypto.randomUUID(),answers:saved.answers||{},contact:{mode:"anonymous"},surveyVersion:3,index:saved.surveyVersion===3?Math.min(saved.index||0,SURVEY.questions.length-1):0,submitted:!!saved.submitted};
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(state));}catch{}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function render(){
@@ -22,9 +22,10 @@ function capture(validate=true){const q=SURVEY.questions[state.index];let v;
  else if($('skip')?.checked)v=null;
  else{const raw=$('value').value.trim();v=q.type==='number'?Number(raw.replace(',','.')):raw;if(validate&&(!raw||(q.type==='number'&&(!Number.isFinite(v)||v<q.min||v>q.max))))throw Error(q.type==='number'?`Введите число от ${q.min} до ${q.max} или выберите «${q.skip}».`:q.id==='region'?'Укажите основной регион.':'Напишите ответ. Если данных нет, укажите это.');}
  state.answers[q.id]=v;persist();}
-$('start').onclick=render;
+persist();
+$('start').onclick=()=>render();
 $('back').onclick=()=>{capture(false);if(state.index){state.index--;render();}else{$('survey').hidden=true;$('intro').hidden=false;}};
 $('question').addEventListener('input',()=>{try{capture(false);}catch{}});
-$('survey').onsubmit=async e=>{e.preventDefault();try{capture();if(state.index<SURVEY.questions.length-1){state.index++;persist();render();window.scrollTo(0,0);return;}$('next').disabled=true;$('back').disabled=true;$('next').textContent='Сохраняем…';await API.send({schema:2,id:state.id,revision:crypto.randomUUID(),answers:state.answers});state.submitted=true;persist();$('survey').hidden=true;$('success').hidden=false;window.scrollTo(0,0);}catch(err){$('error').textContent=err.message;}finally{$('next').disabled=false;$('back').disabled=false;$('next').textContent=state.index===SURVEY.questions.length-1?'Отправить ответы':'Далее';}};
+$('survey').onsubmit=async e=>{e.preventDefault();try{capture();if(state.index<SURVEY.questions.length-1){state.index++;persist();render();window.scrollTo(0,0);return;}$('next').disabled=true;$('back').disabled=true;$('next').textContent='Сохраняем…';await API.send({schema:2,id:state.id,revision:crypto.randomUUID(),answers:state.answers,contact:{mode:'anonymous'}});state.submitted=true;persist();$('survey').hidden=true;$('success').hidden=false;window.scrollTo(0,0);}catch(err){$('error').textContent=err.message;}finally{$('next').disabled=false;$('back').disabled=false;$('next').textContent=state.index===SURVEY.questions.length-1?'Отправить ответы':'Далее';}};
 $('edit').onclick=()=>{state.index=0;render();};
 API.jsonp({action:'ping'}).then(r=>{$('connection').textContent=r.schema===2?'Приём ответов открыт':'Обновляем анкету. Приём ответов скоро откроется.';}).catch(e=>{$('connection').textContent=e.message;});
